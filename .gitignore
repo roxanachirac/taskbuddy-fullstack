@@ -1,0 +1,14 @@
+# React / Frontend
+taskbuddy-frontend/node_modules/
+taskbuddy-frontend/dist/
+taskbuddy-frontend/.env.local
+
+# Java / Backend
+TaskBuddy/.gradle/
+TaskBuddy/build/
+TaskBuddy/target/
+TaskBuddy/.idea/
+TaskBuddy/*.iml
+
+# System
+.DS_Store
