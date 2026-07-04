@@ -172,7 +172,7 @@ function App() {
                                     onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                                     title="Șterge task"
                                 >
-                                    🗑️🚀
+                                    🗑️
                                 </button>
                             </div>
                         </div>
