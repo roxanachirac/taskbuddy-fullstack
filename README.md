@@ -31,14 +31,26 @@ Aplicația este structurată sub formă de **Monorepo**, împărțită în două
 * Node.js (v18+) și npm
 * PostgreSQL rulând local
 
+### Pregătirea Bazei de Date
+1. Rulează în terminal următoarea comandă pentru a intra în consola PostgreSQL:
+```sudo -i -u postgres psql```
+2. Acum, copiază și rulează aceste 3 comenzi SQL (apasă Enter după fiecare);
+```CREATE DATABASE taskbuddy_db;```
+```CREATE USER taskbuddy_user WITH PASSWORD 'pune_parola_ta_aici';```
+```GRANT ALL PRIVILEGES ON DATABASE taskbuddy_db TO pune_un_nume_userului_aici;```
+3. Pentru a ieși din consola PostgreSQL, tastează: `\q`
+
+
 ### 1. Rularea Backend-ului (Spring Boot)
 1. Navighează în folderul backend:
    `cd TaskBuddy`
-2. Deschide fișierul src/main/resources/application.properties și configurează conexiunea la baza ta de date locală:
-    ```spring.datasource.url=jdbc:postgresql://localhost:5432/taskbuddy_db
-        spring.datasource.username=utilizatorul_tau
-        spring.datasource.password=parola_ta
-        spring.jpa.hibernate.ddl-auto=update```
+   2. Seteaza environment variable la tine in sistemul de operare (user-ul si parola create la punctul 2 de la baza de date):
+       ```echo 'export DB_PASSWORD="parola_ta_reala_aici"' >> ~/.bashrc
+            source ~/.bashrc
+       ```
+      ```echo 'export DB_USERNMAE="usernameul_tau_real_aici"' >> ~/.bashrc
+            source ~/.bashrc
+       ```
 3. Lansează serverul Spring Boot în execuție:
    `./mvnw spring-boot:run`
 ## Serverul va porni pe portul 8080
