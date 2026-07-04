@@ -33,21 +33,21 @@ Aplicația este structurată sub formă de **Monorepo**, împărțită în două
 
 ### 1. Rularea Backend-ului (Spring Boot)
 1. Navighează în folderul backend:
-   cd TaskBuddy
+   `cd TaskBuddy`
 2. Deschide fișierul src/main/resources/application.properties și configurează conexiunea la baza ta de date locală:
-    spring.datasource.url=jdbc:postgresql://localhost:5432/taskbuddy
-    spring.datasource.username=utilizatorul_tau
-    spring.datasource.password=parola_ta
-    spring.jpa.hibernate.ddl-auto=update
+    ```spring.datasource.url=jdbc:postgresql://localhost:5432/taskbuddy_db
+        spring.datasource.username=utilizatorul_tau
+        spring.datasource.password=parola_ta
+        spring.jpa.hibernate.ddl-auto=update```
 3. Lansează serverul Spring Boot în execuție:
-    ./mvnw spring-boot:run 
-##Serverul va porni pe portul 8080
+   `./mvnw spring-boot:run`
+## Serverul va porni pe portul 8080
 
 ### 2. Rularea Frontend-ului (React)
 1. Deschide un terminal nou în rădăcina proiectului și accesează folderul de frontend:
-    cd taskbuddy-frontend
+    `cd taskbuddy-frontend`
 2. Instalează modulele Node.js necesare:
-    npm install
+    `npm install`
 3. Lansează serverul de dezvoltare în mod reactiv:
-    npm run dev
-## aplicatia va fi accesibila in broswer la http://localhost:5173
+    `npm run dev`
+### Aplicatia va fi accesibila in broswer la http://localhost:5173
