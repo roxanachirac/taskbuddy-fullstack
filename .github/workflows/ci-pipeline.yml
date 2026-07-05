@@ -39,8 +39,7 @@ jobs:
         if: steps.filter.outputs.backend == 'true'
         run: |
           cd TaskBuddy
-          chmod +x mvnw
-          ./mvnw clean package
+          mvn clean package
 
   # ==========================================
   # JOB 2: VERIFICARE ȘI BUILD FRONTEND (REACT)
