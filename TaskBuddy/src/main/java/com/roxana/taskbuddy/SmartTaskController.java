@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.security.Principal;
 
 @RestController
 @RequestMapping("/api/ai")
@@ -20,11 +21,13 @@ class SmartTaskController {
 
     private final ChatModel chatModel;
     private final TaskRepository taskRepository;
+    private final UserRepository userRepository;
 
     @Autowired
-    public SmartTaskController(ChatModel chatModel, TaskRepository taskRepository) {
+    public SmartTaskController(ChatModel chatModel, TaskRepository taskRepository, UserRepository userRepository) {
         this.chatModel = chatModel;
         this.taskRepository = taskRepository;
+        this.userRepository = userRepository;
     }
 
     public record AiTaskResponse(List<String> titles) {}
@@ -37,7 +40,10 @@ class SmartTaskController {
      * Endpoint 1: Generează sub-task-uri folosind Structured Outputs și le salvează în DB
      */
     @GetMapping("/subtasks")
-    public List<Task> generateAndSaveSubtasks(@RequestParam(value = "task") String task) {
+    public List<Task> generateAndSaveSubtasks(@RequestParam(value = "task") String task, Principal principal) {
+        // Găsim utilizatorul logat curent în baza de date
+        User currentUser = userRepository.findByUsername(principal.getName())
+                .orElseThrow(() -> new RuntimeException("Utilizatorul nu este logat"));
         BeanOutputConverter<AiTaskResponse> outputConverter = new BeanOutputConverter<>(AiTaskResponse.class);
 
         String template = """
@@ -58,7 +64,7 @@ class SmartTaskController {
         }
 
         List<Task> savedTasks = structuredData.titles().stream()
-                .map(title -> new Task(title, "Generat inteligent pentru: " + task, false))
+                .map(title -> new Task(title, "Generat inteligent pentru: " + task, false, currentUser)) // ◄ Trimis direct în constructor
                 .toList();
 
         return taskRepository.saveAll(savedTasks);
@@ -68,9 +74,10 @@ class SmartTaskController {
      * Endpoint 2: Citește toate task-urile active din DB și le ordonează inteligent cu AI
      */
     @GetMapping("/prioritize")
-    public AiPrioritizationResponse prioritizeExistingTasks() {
+    public AiPrioritizationResponse prioritizeExistingTasks(Principal principal) {
         // 1. Luăm toate task-urile din baza de date și le filtrăm doar pe cele nefinalizate
         List<Task> activeTasks = taskRepository.findAll().stream()
+                .filter(task -> task.getUser() != null && task.getUser().getUsername().equals(principal.getName())) // ◄ Filtrare după user
                 .filter(task -> !task.isCompleted())
                 .toList();
 
