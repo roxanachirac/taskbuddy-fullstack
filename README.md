@@ -4,6 +4,12 @@ TaskBuddy este o aplicație modernă de gestionare a task-urilor, dezvoltată pe
 
 ---
 
+## 📺 Demo în Acțiune
+
+![TaskBuddy Demo](https://github.com/user-attachments/assets/a42a628e-806f-44b6-aa55-2a3ce093b9e9)
+
+---
+
 ## 🏗️ Arhitectura Sistemului & DevOps
 
 Proiectul este structurat ca un **Monorepo**, orchestrat complet nativ în containere izolate și automatizat prin mecanisme de Continuous Integration:
