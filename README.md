@@ -1,65 +1,81 @@
-# TaskBuddy - Full-Stack Task Management Application
+# 🚀 TaskBuddy - Enterprise Full-Stack Task Management Application
 
-TaskBuddy este o aplicație modernă de gestionare a task-urilor, dezvoltată cu o arhitectură decuplată (Monorepo), având un backend robust în Java și un frontend interactiv și rapid în React.
+TaskBuddy este o aplicație modernă de gestionare a task-urilor, dezvoltată pe o arhitectură full-stack decuplată (Monorepo). Proiectul integrează funcționalități inteligente bazate pe Inteligență Artificială (OpenAI), securitate robustă și un flux modern de DevOps complet containerizat, fiind pregătit din start pentru mediile de producție.
 
-Proiectul este conceput respectând bunele practici din industrie, fiind pregătit pentru extinderea către funcționalități avansate.
+---
 
-## 🏗️ Arhitectura Proiectului
+## 🏗️ Arhitectura Sistemului & DevOps
 
-Aplicația este structurată sub formă de **Monorepo**, împărțită în două module principale:
-* `/backend` - Serverul API dezvoltat în Spring Boot 3 și conectat la o bază de date relațională PostgreSQL.
-* `/frontend` - Interfața grafică (SPA) dezvoltată în React 19 utilizând Vite pentru build și optimizare.
+Proiectul este structurat ca un **Monorepo**, orchestrat complet nativ în containere izolate și automatizat prin mecanisme de Continuous Integration:
 
-## 🛠️ Tehnologii Utilizate
+* **`/TaskBuddy`** - Server API RESTful dezvoltat în Spring Boot 3, securizat și integrat cu inteligență artificială.
+* **`/taskbuddy-frontend`** - Interfață SPA modernă dezvoltată în React + TypeScript, servită printr-un proxy invers Nginx în mediul containerizat.
+* **`CI/CD Pipeline`** - Validare automată a calității codului, tipizării TypeScript și asamblării Docker la fiecare Push/PR prin GitHub Actions.
+
+---
+
+## 🛠️ Stack-ul Tehnologic
 
 ### Backend
-* **Java 17+**
+* **Java 21** (Mecanisme moderne și performante)
 * **Spring Boot 3.x** (Spring Web, Spring Data JPA)
-* **PostgreSQL** (Bază de date relațională)
-* **Maven** (Gestionarea dependențelor)
+* **Spring Security & Basic Auth** (Protecție granulară pe rutele API)
+* **OpenAI Service** (Integrare AI pentru ordonare inteligentă și descompunere de task-uri)
+* **PostgreSQL** (Bază de date relațională robustă)
+* **Maven** (Orchestrare dependențe)
 
 ### Frontend
-* **React 19**
-* **TypeScript** (Pentru un cod sigur și tipizat puternic)
-* **Vite** (Tool de dezvoltare ultra-rapid)
-* **CSS3** (Stilizare modernă și responsive)
+* **React 19** & **TypeScript** (Cod predictibil, tipizat puternic și fără warning-uri)
+* **Vite** (Tool de build și bundling ultra-rapid)
+* **Nginx** (Proxy invers utilizat în Docker pentru rutare și eliminarea conflictelor CORS în producție)
+* **Modern CSS3** (Design responsive, curat și fluid)
 
-## 🚀 Pornirea Proiectului în Dezvoltare Locală
+---
+
+## ⚡ Pornirea Instantă în Prodezvoltare (Recomandat prin Docker)
+
+Datorită containerizării complete, nu este nevoie să instalezi manual Java, Node.js sau PostgreSQL pe mașina ta locală. Totul pornește izolat și gata configurat.
 
 ### Pre-cerințe
-* Java 17 sau mai nou instalat
-* Node.js (v18+) și npm
-* PostgreSQL rulând local
+* **Docker** și **Docker Compose** instalate.
 
-### Pregătirea Bazei de Date
-1. Rulează în terminal următoarea comandă pentru a intra în consola PostgreSQL:
-```sudo -i -u postgres psql```
-2. Acum, copiază și rulează aceste 3 comenzi SQL (apasă Enter după fiecare);
-```CREATE DATABASE taskbuddy_db;```
-```CREATE USER taskbuddy_user WITH PASSWORD 'pune_parola_ta_aici';```
-```GRANT ALL PRIVILEGES ON DATABASE taskbuddy_db TO pune_un_nume_userului_aici;```
-3. Pentru a ieși din consola PostgreSQL, tastează: `\q`
+### Pașii de pornire:
 
+1.  **Clonează repository-ul:**
+    ```bash
+    git clone [https://github.com/utilizatorul-tau/taskBuddy-fullstack.git](https://github.com/utilizatorul-tau/taskBuddy-fullstack.git)
+    cd taskBuddy-fullstack
+    ```
 
-### 1. Rularea Backend-ului (Spring Boot)
-1. Navighează în folderul backend:
-   `cd TaskBuddy`
-   2. Seteaza environment variable la tine in sistemul de operare (user-ul si parola create la punctul 2 de la baza de date):
-       ```echo 'export DB_PASSWORD="parola_ta_reala_aici"' >> ~/.bashrc
-            source ~/.bashrc
-       ```
-      ```echo 'export DB_USERNMAE="usernameul_tau_real_aici"' >> ~/.bashrc
-            source ~/.bashrc
-       ```
-3. Lansează serverul Spring Boot în execuție:
-   `./mvnw spring-boot:run`
-## Serverul va porni pe portul 8080
+2.  **Configurarea Variablelor de Mediu (`.env`):**
+    Creează un fișier numit `.env` în rădăcina proiectului și adaugă secretele necesare:
+    ```env
+    DB_NAME=taskbuddy
+    DB_USER=postgres
+    DB_PASSWORD=parola_ta_securizata_aici
+    OPENAI_API_KEY=sk-proj-CheiaTaRealaOpenAI
+    ```
 
-### 2. Rularea Frontend-ului (React)
-1. Deschide un terminal nou în rădăcina proiectului și accesează folderul de frontend:
-    `cd taskbuddy-frontend`
-2. Instalează modulele Node.js necesare:
-    `npm install`
-3. Lansează serverul de dezvoltare în mod reactiv:
-    `npm run dev`
-### Aplicatia va fi accesibila in broswer la http://localhost:5173
+3.  **Lansarea aplicației:**
+    Rulează comanda de orchestrare:
+    ```bash
+    docker compose up --build
+    ```
+
+🎉 **Gata!** Aplicația este orchestrată, rețelele interne Docker sunt legate, iar platforma este live:
+* 🌐 **Interfața React (Frontend + Nginx Proxy):** Accesează direct [http://localhost](http://localhost) (Port implicit 80)
+* ☕ **API REST (Backend):** Rulează securizat în spate pe portul `8080`, proxy-ul Nginx routând cererile din `/api/**` în mod transparent pentru a evita problemele de CORS.
+
+---
+
+## 🛠️ Metoda Alternativă: Rularea Manuală (Fără Docker)
+
+Dacă dorești să rulezi serviciile separat în mod nativ pe sistemul de operare:
+
+### 1. Baza de Date (PostgreSQL)
+1. Intră în consola psql: `sudo -i -u postgres psql`
+2. Rulează comenzile de inițializare:
+   ```sql
+   CREATE DATABASE taskbuddy;
+   CREATE USER postgres WITH PASSWORD 'parola_ta';
+   GRANT ALL PRIVILEGES ON DATABASE taskbuddy TO postgres;
