@@ -12,3 +12,4 @@ TaskBuddy/*.iml
 
 # System
 .DS_Store
+.env
