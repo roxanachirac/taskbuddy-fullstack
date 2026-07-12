@@ -1,5 +1,6 @@
 package com.roxana.taskbuddy;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
@@ -18,11 +19,17 @@ import java.util.List;
 @EnableWebSecurity
 class SecurityConfig {
 
+    @Autowired
+    private CustomAuthenticationEntryPoint authenticationEntryPoint;
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable()) // Dezactivăm pentru API-uri REST
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint(authenticationEntryPoint)
+                )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/register").permitAll() // Rute publice pentru înregistrare/login
                         .anyRequest().authenticated() // Toate celelalte rute (task-uri, AI) cer autentificare

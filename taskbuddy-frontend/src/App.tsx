@@ -33,7 +33,7 @@ function App() {
     const [prioritizedList, setPrioritizedList] = useState<PrioritizedTaskItem[]>([]);
 
     // Helper pentru a genera Header-ul de Basic Authentication
-    const getAuthHeader= useCallback((): Record<string, string> => {
+    const getAuthHeader = useCallback((): Record<string, string> => {
         if (!user || !password) return {};
         return { 'Authorization': 'Basic ' + btoa(`${user}:${password}`) };
     }, [user, password]);
@@ -89,7 +89,10 @@ function App() {
         fetch(url, { method: isRegistering ? 'POST' : 'GET', headers, body })
             .then(async (res) => {
                 const data = await res.json();
-                if (!res.ok) throw new Error(data.message || "A apărut o eroare");
+                // 🛠️ MODIFICAT: Citim câmpul .error trimis de CustomAuthenticationEntryPoint sau .message
+                if (!res.ok) {
+                    throw new Error(data.error || data.message || "A apărut o eroare la autentificare.");
+                }
                 return data;
             })
             .then(() => {
