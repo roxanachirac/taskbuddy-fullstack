@@ -1,4 +1,4 @@
-name: 🚀 TaskBuddy CI Pipeline
+name: 🚀 TaskBuddy CI/CD Pipeline
 
 on:
   push:
@@ -34,6 +34,7 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
           cache: 'maven'
+          cache-dependency-path: 'TaskBuddy/pom.xml'
 
       - name: 🔨 Build and Test Backend
         if: steps.filter.outputs.backend == 'true'
@@ -86,3 +87,50 @@ jobs:
         run: |
           cd taskbuddy-frontend
           npm run build
+
+  # ==========================================
+  # JOB 3: VALIDARE IMAGINI DOCKER (NOU)
+  # ==========================================
+  docker-build-ci:
+    name: 🐳 Docker Build Verification
+    runs-on: ubuntu-latest
+    environment: Test # Sursa pentru Environment Secrets în GitHub
+
+    steps:
+      - name: ⬇️ Checkout Repository
+        uses: actions/checkout@v4
+
+      # Verificăm dacă s-a schimbat ceva în proiect sau în fișierele Docker
+      - name: 🔍 Check for Changes Affecting Docker
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            docker:
+              - 'TaskBuddy/**'
+              - 'taskbuddy-frontend/**'
+              - 'docker-compose.yml'
+              - '.github/workflows/ci-pipeline.yml'
+
+      - name: 🛠️ Set up Docker Buildx
+        if: steps.filter.outputs.docker == 'true'
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🐳 Build Test - Backend Docker Image
+        if: steps.filter.outputs.docker == 'true'
+        uses: docker/build-push-action@v5
+        with:
+          context: ./TaskBuddy
+          push: false
+          build-args: |
+            DB_NAME=${{ secrets.DB_NAME }}
+            DB_USER=${{ secrets.DB_USER }}
+            DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+            OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
+
+      - name: 🐳 Build Test - Frontend Docker Image
+        if: steps.filter.outputs.docker == 'true'
+        uses: docker/build-push-action@v5
+        with:
+          context: ./taskbuddy-frontend
+          push: false
