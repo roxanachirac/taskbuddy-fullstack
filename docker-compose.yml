@@ -1,8 +1,6 @@
 services:
-  # 1. Baza de date PostgreSQL
-  postgres-db:
+  postgresql:
     image: postgres:16-alpine
-    container_name: taskbuddy-db
     environment:
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USER}
@@ -10,40 +8,4 @@ services:
     ports:
       - "5433:5432"
     volumes:
-      - pgdata:/var/lib/postgresql/data
-    networks:
-      - taskbuddy-network
-
-  # 2. Aplicația Backend (Spring Boot)
-  backend:
-    build: ./TaskBuddy
-    container_name: taskbuddy-backend
-    ports:
-      - "8080:8080"
-    environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/${DB_NAME}
-      - SPRING_DATASOURCE_USERNAME=${DB_USER}
-      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
-      - SPRING_AI_OPENAI_API_KEY=${OPENAI_API_KEY}
-    depends_on:
-      - postgres-db
-    networks:
-      - taskbuddy-network
-
-  # 3. Aplicația Frontend (React + Nginx)
-  frontend:
-    build: ./taskbuddy-frontend
-    container_name: taskbuddy-frontend
-    ports:
-      - "80:80"
-    depends_on:
-      - backend
-    networks:
-      - taskbuddy-network
-
-volumes:
-  pgdata:
-
-networks:
-  taskbuddy-network:
-    driver: bridge
+      - /media/roxana/Data/Projects/taskbuddy-fullstack-docker/postgresql/data:/var/lib/postgresql/data
