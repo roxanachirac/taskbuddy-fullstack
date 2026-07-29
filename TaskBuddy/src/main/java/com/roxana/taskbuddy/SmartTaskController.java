@@ -4,7 +4,6 @@ import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.ai.converter.BeanOutputConverter;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -23,7 +22,6 @@ class SmartTaskController {
     private final TaskRepository taskRepository;
     private final UserRepository userRepository;
 
-    @Autowired
     public SmartTaskController(ChatModel chatModel, TaskRepository taskRepository, UserRepository userRepository) {
         this.chatModel = chatModel;
         this.taskRepository = taskRepository;

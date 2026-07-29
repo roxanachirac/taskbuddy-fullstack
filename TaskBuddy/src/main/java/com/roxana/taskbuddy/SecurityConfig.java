@@ -1,6 +1,5 @@
 package com.roxana.taskbuddy;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
@@ -19,8 +18,11 @@ import java.util.List;
 @EnableWebSecurity
 class SecurityConfig {
 
-    @Autowired
-    private CustomAuthenticationEntryPoint authenticationEntryPoint;
+    private final CustomAuthenticationEntryPoint authenticationEntryPoint;
+
+    public SecurityConfig(CustomAuthenticationEntryPoint authenticationEntryPoint) {
+        this.authenticationEntryPoint = authenticationEntryPoint;
+    }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -51,10 +53,11 @@ class SecurityConfig {
         configuration.setAllowedOrigins(List.of(
                 "http://localhost",
                 "http://127.0.0.1",
+                "http://localhost:5173",
+                "http://localhost:3000",
                 "http://frontend",
                 "http://backend:8080"
         ));
-        configuration.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:3000")); // Adresele React-ului
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
         configuration.setExposedHeaders(List.of("Authorization"));
