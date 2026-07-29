@@ -12,4 +12,5 @@ TaskBuddy/*.iml
 
 # System
 .DS_Store
-.env
+/.idea/runConfigurations/
+/.env
