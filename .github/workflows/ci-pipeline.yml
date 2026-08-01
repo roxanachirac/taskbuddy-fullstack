@@ -134,3 +134,106 @@ jobs:
         with:
           context: ./taskbuddy-frontend
           push: false
+
+  # ==========================================
+  # JOB 4: PLAYWRIGHT E2E TESTS
+  # ==========================================
+  e2e-tests:
+    name: 🎭 Playwright E2E Tests
+    runs-on: ubuntu-latest
+    needs: [backend-ci, frontend-ci]
+    if: always() && needs.backend-ci.result == 'success' && needs.frontend-ci.result == 'success'
+
+    # PostgreSQL service container (disponibil pe localhost:5432)
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: taskbuddy
+          POSTGRES_USER: taskbuddy
+          POSTGRES_PASSWORD: taskbuddy
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - name: ⬇️ Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 🔍 Check for Frontend Changes
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            frontend:
+              - 'taskbuddy-frontend/**'
+              - '.github/workflows/ci-pipeline.yml'
+
+      - name: 🟢 Set up Node.js
+        if: steps.filter.outputs.frontend == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: 'taskbuddy-frontend/package-lock.json'
+
+      - name: 📦 Install Frontend Dependencies
+        if: steps.filter.outputs.frontend == 'true'
+        run: |
+          cd taskbuddy-frontend
+          npm ci
+
+      - name: 🎭 Install Playwright Browsers
+        if: steps.filter.outputs.frontend == 'true'
+        run: |
+          cd taskbuddy-frontend
+          npx playwright install --with-deps chromium
+
+      - name: ☕ Set up JDK 21 (for Backend API)
+        if: steps.filter.outputs.frontend == 'true'
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven'
+          cache-dependency-path: 'TaskBuddy/pom.xml'
+
+      - name: 🔨 Build Backend
+        if: steps.filter.outputs.frontend == 'true'
+        run: |
+          cd TaskBuddy
+          mvn clean package -DskipTests
+
+      - name: 🚀 Start Backend Server (CI profile)
+        if: steps.filter.outputs.frontend == 'true'
+        run: |
+          java -jar TaskBuddy/target/TaskBuddy-0.0.1-SNAPSHOT.jar --spring.profiles.active=ci &
+          # Așteptăm ca backend-ul să fie gata
+          for i in $(seq 1 30); do
+            if curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/api/tasks | grep -q "200"; then
+              echo "✅ Backend is ready"
+              break
+            fi
+            echo "Waiting for backend... ($i/30)"
+            sleep 2
+          done
+
+      - name: 🎭 Run Playwright E2E Tests
+        if: steps.filter.outputs.frontend == 'true'
+        env:
+          VITE_API_BASE_URL: http://localhost:8080/api
+        run: |
+          cd taskbuddy-frontend
+          npx playwright test --reporter=list
+
+      - name: 📸 Upload Playwright Report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: taskbuddy-frontend/playwright-report/
+          retention-days: 30
