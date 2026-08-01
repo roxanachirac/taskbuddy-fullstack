@@ -2,18 +2,13 @@ package com.roxana.taskbuddy;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-import org.springframework.web.bind.annotation.*;
 
-import java.security.Principal;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import static com.roxana.taskbuddy.TaskController.countWordFrequency;
@@ -50,6 +45,7 @@ class User {
     }
 
     public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
     public String getUsername() { return username; }
 //    public void setUsername(String username) { this.username = username; }
     public String getPassword() { return password; }
@@ -107,95 +103,4 @@ interface TaskRepository extends JpaRepository<Task, Long> {
 @Repository
 interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByUsername(String username);
-}
-
-// 3. CONTROLLERUL REST (Rămâne creierul API-ului, dar acum vorbește cu baza de date)
-@RestController
-@RequestMapping("/api/tasks")
-class TaskController {
-
-    private final TaskRepository taskRepository;
-    private final UserRepository userRepository;
-
-    // Spring va injecta automat repositorul aici (Dependency Injection)
-    public TaskController(TaskRepository taskRepository, UserRepository userRepository) {
-        this.taskRepository = taskRepository;
-        this.userRepository = userRepository;
-    }
-
-    // Helper util pentru a lua utilizatorul curent rapid și a nu repeta codul
-    private User getCurrentUser(Principal principal) {
-        return userRepository.findByUsername(principal.getName())
-                .orElseThrow(() -> new RuntimeException("Eroare: Utilizatorul nu este autentificat!"));
-    }
-
-    // GET /api/tasks - Ia toate task-urile din PostgreSQL
-    @GetMapping
-    public List<Task> getAllTasks(Principal principal) {
-        User currentUser = getCurrentUser(principal);
-        // Returnăm DOAR task-urile care aparțin utilizatorului logat
-        return taskRepository.findAll().stream()
-                .filter(task -> task.getUser() != null && task.getUser().getId().equals(currentUser.getId()))
-                .toList();
-    }
-
-    // POST /api/tasks - Salvează un task nou în PostgreSQL și întoarce lista actualizată
-    @PostMapping
-    public List<Task> createTask(@Valid @RequestBody Task newTask, Principal principal) {
-        User currentUser = getCurrentUser(principal);
-        // Asociem noul task cu utilizatorul logat înainte de salvare
-        newTask.setUser(currentUser);
-        newTask.setCompleted(false); // Forțăm task-ul nou să fie "În lucru"
-        taskRepository.save(newTask); // Îl salvăm în baza de date
-        return getAllTasks(principal);// Întoarcem lista proaspătă
-    }
-
-    // PUT /api/tasks/{id}/toggle - Schimbă starea unui task direct în baza de date
-    @PutMapping("/{id}/toggle")
-    public List<Task> toggleTask(@PathVariable Long id, Principal principal) {
-        User currentUser = getCurrentUser(principal);
-        // Căutam task-ul după ID; dacă nu îl găsim, aruncăm o eroare
-        Task task = taskRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Task-ul nu a fost găsit!"));
-
-        // Verificare de securitate: Te asiguri că utilizatorul nu încearcă să modifice task-ul altcuiva!
-        if (task.getUser() == null || !task.getUser().getId().equals(currentUser.getId())) {
-            throw new RuntimeException("Eroare: Nu ai permisiunea să modifici acest task!");
-        }
-
-        task.setCompleted(!task.isCompleted()); // Inversăm starea
-        taskRepository.save(task); // Salvăm modificarea în DB
-
-        return getAllTasks(principal);
-    }
-
-    // DELETE /api/tasks/{id} - Șterge un task după ID și întoarce lista rămasă
-    @DeleteMapping("/{id}")
-    public List<Task> deleteTask(@PathVariable Long id, Principal principal) {
-        User currentUser = getCurrentUser(principal);
-        Task task = taskRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Task-ul nu a fost găsit!"));
-
-        // Verificare de securitate la ștergere
-        if (task.getUser() == null || !task.getUser().getId().equals(currentUser.getId())) {
-            throw new RuntimeException("Eroare: Nu ai permisiunea să ștergi acest task!");
-        }
-
-        taskRepository.delete(task);
-        return getAllTasks(principal);
-    }
-
-    public static Map<String, Integer> countWordFrequency(List<String> titles) {
-        Map<String, Integer> wordToCount = new HashMap<>();
-        for (String title : titles) {
-            String[] words = title.split(" ");
-            for (String word : words) {
-                String cleanedWord = word.toLowerCase().trim();
-                if (cleanedWord.isEmpty()) continue;
-
-                wordToCount.put(cleanedWord, wordToCount.getOrDefault(cleanedWord, 0) +1);
-            }
-        }
-        return wordToCount;
-    }
 }

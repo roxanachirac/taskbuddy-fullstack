@@ -8,7 +8,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
-class AuthController {
+public class AuthController {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
