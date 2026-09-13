@@ -3,24 +3,31 @@ import { test, expect, Page } from '@playwright/test';
 /**
  * Helper: register a user (accepting the alert) and log in.
  * Returns the username so callers can use it for assertions.
+ * Uses a random suffix to avoid collisions when tests run in parallel.
  */
 async function registerAndLogin(page: Page): Promise<string> {
-  // Accept alert dialogs during registration
-  page.on('dialog', async (dialog) => {
-    await dialog.accept();
-  });
+  const randomSuffix = Math.random().toString(36).substring(2, 8);
+  const username = `taskuser-${Date.now()}-${randomSuffix}`;
 
-  const username = `taskuser-${Date.now()}`;
+  // Set up dialog handler BEFORE any page interaction to avoid race conditions
+  const dialogHandler = async (dialog: import('@playwright/test').Dialog) => {
+    await dialog.accept();
+  };
+  page.on('dialog', dialogHandler);
 
   await page.goto('/');
   await page.getByText('Înregistrează-te').click();
   await expect(page.getByRole('heading', { name: 'Crează un cont nou' })).toBeVisible();
   await page.getByPlaceholder('Utilizator').fill(username);
   await page.getByPlaceholder('Parolă').fill('SecurePass123!');
+
   await page.getByRole('button', { name: 'Înregistrare' }).click();
 
   // After alert is accepted, verify login view is shown
   await expect(page.getByRole('heading', { name: 'Autentifică-te' })).toBeVisible();
+
+  // Remove the dialog handler now that registration alert is handled
+  page.off('dialog', dialogHandler);
 
   await page.getByPlaceholder('Utilizator').fill(username);
   await page.getByPlaceholder('Parolă').fill('SecurePass123!');
@@ -68,12 +75,15 @@ test.describe('Task Management', () => {
   test('should delete a task', async ({ page }) => {
     await registerAndLogin(page);
 
-    // Click the delete button — it's not in AX tree (no accessible name)
-    // Use page.evaluate to find and click the button directly in DOM
     const taskTitle = `Delete Task - ${Date.now()}`;
     await page.getByPlaceholder('Ce ai de făcut astăzi?').fill(taskTitle);
     await page.getByRole('button', { name: '+ Adaugă în listă' }).click();
     await expect(page.getByText(taskTitle)).toBeVisible();
+
+    // Accept the window.confirm() dialog that fires before deletion
+    page.once('dialog', async (dialog) => {
+      await dialog.accept();
+    });
 
     // Click the delete button — it's not in AX tree (no accessible name)
     // Use the task title to find the card, then click the last button
@@ -95,10 +105,15 @@ test.describe('Task Management', () => {
     // Create task 1
     await page.getByPlaceholder('Ce ai de făcut astăzi?').fill(task1);
     await page.getByRole('button', { name: '+ Adaugă în listă' }).click();
+    await expect(page.getByText(task1)).toBeVisible();
+
+    // Small delay to ensure the first task is fully persisted and rendered
+    await page.waitForTimeout(300);
 
     // Create task 2
     await page.getByPlaceholder('Ce ai de făcut astăzi?').fill(task2);
     await page.getByRole('button', { name: '+ Adaugă în listă' }).click();
+    await expect(page.getByText(task2)).toBeVisible();
 
     // Verify both tasks are visible
     await expect(page.getByText(task1)).toBeVisible();
