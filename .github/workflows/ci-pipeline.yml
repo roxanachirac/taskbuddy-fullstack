@@ -211,7 +211,8 @@ jobs:
       - name: 🚀 Start Backend Server (CI profile)
         if: steps.filter.outputs.frontend == 'true'
         run: |
-          java -jar TaskBuddy/target/TaskBuddy-0.0.1-SNAPSHOT.jar --spring.profiles.active=ci &
+          cd TaskBuddy
+          java -jar target/taskbuddy-0.0.1-SNAPSHOT.jar --spring.profiles.active=ci &
           # Așteptăm ca backend-ul să fie gata
           for i in $(seq 1 30); do
             if curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/api/tasks | grep -q "200"; then
