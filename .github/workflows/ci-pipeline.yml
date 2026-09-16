@@ -210,18 +210,38 @@ jobs:
 
       - name: 🚀 Start Backend Server (CI profile)
         if: steps.filter.outputs.frontend == 'true'
+        env:
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_NAME: taskbuddy
+          DB_USERNAME: taskbuddy
+          DB_PASSWORD: taskbuddy
+          OPENAI_API_KEY: dummy-key-for-ci
         run: |
           cd TaskBuddy
-          java -jar target/taskbuddy-0.0.1-SNAPSHOT.jar --spring.profiles.active=ci &
+          java -jar target/taskbuddy-0.0.1-SNAPSHOT.jar --spring.profiles.active=ci > backend.log 2>&1 &
+          BACKEND_PID=$!
           # Așteptăm ca backend-ul să fie gata
           for i in $(seq 1 30); do
-            if curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/api/tasks | grep -q "200"; then
+            if curl -s -o /dev/null http://localhost:8080/actuator/health; then
               echo "✅ Backend is ready"
               break
             fi
             echo "Waiting for backend... ($i/30)"
             sleep 2
+            # Dacă procesul a murit, ieșim cu eroare
+            if ! kill -0 $BACKEND_PID 2>/dev/null; then
+              echo "❌ Backend process died. Last 50 lines of log:"
+              tail -50 backend.log
+              exit 1
+            fi
           done
+          # Verificăm că loop-ul a ieșit pe break (backend ready), nu pe exhaust
+          if ! curl -s -o /dev/null http://localhost:8080/actuator/health; then
+            echo "❌ Backend failed to start within 60s. Full log:"
+            cat backend.log
+            exit 1
+          fi
 
       - name: 🎭 Run Playwright E2E Tests
         if: steps.filter.outputs.frontend == 'true'
