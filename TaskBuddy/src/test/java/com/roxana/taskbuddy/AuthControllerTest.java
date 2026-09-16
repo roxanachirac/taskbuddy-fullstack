@@ -62,7 +62,7 @@ class AuthControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("Utilizator înregistrat cu succes!"));
 
-        verify(userRepository).findByUsername("newuser");
+        verify(userRepository).findByUsername("newuserr");
         verify(userRepository).save(any(User.class));
     }
 
