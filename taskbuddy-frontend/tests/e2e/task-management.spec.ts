@@ -134,6 +134,6 @@ test.describe('Task Management', () => {
     const boxB = await headingB.boundingBox();
 
     // The uncompleted task (B) should have a smaller Y (higher on page) than completed (A)
-    expect(boxB!.y).toBeGreaterThan(boxA!.y);
+    expect(boxB!.y).toBeLessThan(boxA!.y);
   });
 });
