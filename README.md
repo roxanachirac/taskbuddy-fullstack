@@ -57,7 +57,7 @@ Datorită containerizării complete, nu este nevoie să instalezi manual Java, N
     Creează un fișier numit `.env` în rădăcina proiectului și adaugă secretele necesare:
     ```env
     DB_NAME=taskbuddy
-    DB_USER=postgres
+    DB_USERNAME=postgres
     DB_PASSWORD=parola_ta_securizata_aici
     OPENAI_API_KEY=sk-proj-CheiaTaRealaOpenAI
     ```
