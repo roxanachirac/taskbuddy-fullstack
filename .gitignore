@@ -14,3 +14,5 @@ TaskBuddy/*.iml
 .DS_Store
 /.idea/runConfigurations/
 /.env
+.neon
+node_modules/

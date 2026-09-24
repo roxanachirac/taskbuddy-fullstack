@@ -9,7 +9,13 @@ RUN npm run build
 # Stage 2: Run - Servim fișierele cu Nginx
 FROM nginx:alpine
 COPY --from=build /app/dist /usr/share/nginx/html
-# Copiem o configurație simplă de Nginx ca să meargă rutele de React la refresh
-RUN echo 'server { listen 80; location / { root /usr/share/nginx/html; index index.html; try_files $uri $uri/ /index.html; } location /api { proxy_pass http://backend:8080; proxy_set_header Host $host; proxy_set_header X-Real-IP $remote_addr; proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; } }' > /etc/nginx/conf.d/default.conf
+# Configurația Nginx folosește mecanismul oficial de templates:
+# variabila ${BACKEND_URL} e înlocuită la pornire (image-ul oficial nginx
+# rulează envsubst pe /etc/nginx/templates/*.template).
+# Asta ne permite să folosim aceeași imagine pe AWS, GCP și Azure,
+# dând doar BACKEND_URL diferit ca variabilă de mediu.
+# Default-ul păstrează comportamentul vechi pentru docker-compose local.
+ENV BACKEND_URL=http://backend:8080
+COPY nginx.conf.template /etc/nginx/templates/default.conf.template
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
