@@ -16,6 +16,11 @@ COPY --from=build /app/dist /usr/share/nginx/html
 # dând doar BACKEND_URL diferit ca variabilă de mediu.
 # Default-ul păstrează comportamentul vechi pentru docker-compose local.
 ENV BACKEND_URL=http://backend:8080
+# Cloud Run seteaza PORT=8080; default-ul pastreaza portul 80 pt docker-compose.
+# NGINX_ENVSUBST_FILTER lasa envsubst sa inlocuiasca doar BACKEND_URL si PORT
+# (altfel ar inlocui si $host/$remote_addr, dar nu si ${VAR} fara default).
+ENV PORT=80
+ENV NGINX_ENVSUBST_FILTER="^(BACKEND_URL|PORT)$"
 COPY nginx.conf.template /etc/nginx/templates/default.conf.template
-EXPOSE 80
+EXPOSE 8080
 CMD ["nginx", "-g", "daemon off;"]

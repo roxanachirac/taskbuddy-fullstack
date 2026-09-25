@@ -1,5 +1,8 @@
 server {
-    listen 80;
+    # Cloud Run trimite PORT=8080 si cere containerul sa asculte acolo.
+    # In docker-compose local PORT nu e setat, ramane 80.
+    # envsubst inlocuieste doar variabilele de forma ${VAR} (nu $uri etc).
+    listen ${PORT};
     location / {
         root /usr/share/nginx/html;
         index index.html;
