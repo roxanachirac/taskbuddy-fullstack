@@ -20,7 +20,11 @@ ENV BACKEND_URL=http://backend:8080
 # NGINX_ENVSUBST_FILTER lasa envsubst sa inlocuiasca doar BACKEND_URL si PORT
 # (altfel ar inlocui si $host/$remote_addr, dar nu si ${VAR} fara default).
 ENV PORT=80
-ENV NGINX_ENVSUBST_FILTER="^(BACKEND_URL|PORT)$"
+# Host-ul trimis backend-ului prin proxy (Cloud Run routeaza dupa Host).
+# In docker-compose e alias-ul de retea 'backend'; in Cloud Run e domeniul
+# backend-ului, dat ca variabila BACKEND_HOST in pipeline.
+ENV BACKEND_HOST=backend
+ENV NGINX_ENVSUBST_FILTER="^(BACKEND_URL|PORT|BACKEND_HOST)$"
 COPY nginx.conf.template /etc/nginx/templates/default.conf.template
 EXPOSE 8080
 CMD ["nginx", "-g", "daemon off;"]

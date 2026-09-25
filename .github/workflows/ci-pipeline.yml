@@ -394,9 +394,14 @@ jobs:
 
       # Cloud Run returnează URL-ul cu slash final; îl tăiem ca să nu
       # strice proxy_pass din nginx (ar elimina prefixul /api).
+      # SCOPE = URL fără scheme (https://), folosit ca antet Host — Cloud Run
+      # face routing după Host, deci nginx trebuie să trimită domeniul backend-ului.
       - name: 🔗 GCP — Compute Backend URL
         id: gcp-backend-url
-        run: echo "url=${GCP_BACKEND_URL%/}" >> "$GITHUB_OUTPUT"
+        run: |
+          U="${GCP_BACKEND_URL%/}"
+          echo "url=$U" >> "$GITHUB_OUTPUT"
+          echo "scope=${U#https://}" >> "$GITHUB_OUTPUT"
         env:
           GCP_BACKEND_URL: ${{ steps.deploy-backend.outputs.url }}
 
@@ -409,6 +414,7 @@ jobs:
           allow_unauthenticated: true
           env_vars: |
             BACKEND_URL=${{ steps.gcp-backend-url.outputs.url }}/api/
+            BACKEND_HOST=${{ steps.gcp-backend-url.outputs.scope }}
 
       # ==========================================
       # PART C — Azure: login -> az acr login -> build & push -> Container Apps
