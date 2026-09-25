@@ -273,6 +273,11 @@ jobs:
     needs: [e2e-tests]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     environment: Test
+    # OIDC: fără id-token: write GitHub nu injectează ACTIONS_ID_TOKEN_REQUEST_*
+    # și google-github-actions/auth nu poate cere token-ul către GCP.
+    permissions:
+      contents: read
+      id-token: write
 
     steps:
       - name: ⬇️ Checkout Repository
