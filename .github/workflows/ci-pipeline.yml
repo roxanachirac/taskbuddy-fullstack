@@ -406,6 +406,7 @@ jobs:
           service: taskbuddy-frontend-test
           region: ${{ secrets.GCP_REGION }}
           image: ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT }}/taskbuddy/taskbuddy-frontend:test
+          allow_unauthenticated: true
           env_vars: |
             BACKEND_URL=${{ steps.gcp-backend-url.outputs.url }}/
 
