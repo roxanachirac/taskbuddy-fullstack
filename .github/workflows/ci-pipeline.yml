@@ -391,6 +391,7 @@ jobs:
             DB_USERNAME=${{ secrets.DB_USERNAME }}
             DB_PASSWORD=${{ secrets.DB_PASSWORD }}
             OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
+            CORS_ALLOWED_ORIGINS=https://*.run.app
 
       # Cloud Run returnează URL-ul cu slash final; îl tăiem ca să nu
       # strice proxy_pass din nginx (ar elimina prefixul /api).
