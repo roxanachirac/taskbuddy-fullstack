@@ -408,7 +408,7 @@ jobs:
           image: ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT }}/taskbuddy/taskbuddy-frontend:test
           allow_unauthenticated: true
           env_vars: |
-            BACKEND_URL=${{ steps.gcp-backend-url.outputs.url }}/
+            BACKEND_URL=${{ steps.gcp-backend-url.outputs.url }}/api/
 
       # ==========================================
       # PART C — Azure: login -> az acr login -> build & push -> Container Apps

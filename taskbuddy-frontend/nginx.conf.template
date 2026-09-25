@@ -1,19 +1,19 @@
 server {
-    # Cloud Run trimite PORT=8080 si cere containerul sa asculte acolo.
-    # In docker-compose local PORT nu e setat, ramane 80.
-    # envsubst inlocuieste doar variabilele de forma ${VAR} (nu $uri etc).
     listen ${PORT};
+    server_name localhost;
+
     location / {
         root /usr/share/nginx/html;
-        index index.html;
+        index index.html index.htm;
         try_files $uri $uri/ /index.html;
     }
-    # BACKEND_URL este înlocuit automat la pornire de imaginea oficială nginx
-    # (envsubst pe fișierele din /etc/nginx/templates)
-    location /api {
+
+    # Proxy API calls to Spring Boot backend
+    location /api/ {
         proxy_pass ${BACKEND_URL};
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
     }
 }
