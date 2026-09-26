@@ -54,7 +54,10 @@ class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList(allowedOrigins.split(",")));
+        // setAllowedOriginPatterns (nu setAllowedOrigins) suporta wildcard-uri
+        // de forma https://*.run.app; setAllowedOrigins face potrvire exacta
+        // si ar respinge preflight-urile POST cu "Invalid CORS request".
+        configuration.setAllowedOriginPatterns(Arrays.asList(allowedOrigins.split(",")));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
         configuration.setExposedHeaders(List.of("Authorization"));
