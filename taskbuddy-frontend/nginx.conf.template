@@ -9,6 +9,7 @@ server {
     }
 
     # Proxy API calls to Spring Boot backend
+    # uncomment this 2 lines for GCP deployment step
     # proxy_set_header Host ${BACKEND_HOST};
     # proxy_ssl_server_name on;
     location /api/ {
