@@ -268,7 +268,7 @@ jobs:
   #   Azure -> ACR (comentat — fără cont configurat)
   # ==========================================
   deploy-test:
-    name: 🚀 Deploy to Test (GCP)
+    name: 🚀 Deploy to Test (AWS)
     runs-on: ubuntu-latest
     needs: [e2e-tests]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
@@ -288,134 +288,133 @@ jobs:
 
       # ==========================================
       # PART A — AWS: login ECR -> build & push -> deploy ECS
-      # COMENTAT: nu avem cont AWS configurat. Se decomentează
-      # când secretele AWS_* există în environment-ul Test.
       # ==========================================
-      # - name: 🔐 AWS — Configure Credentials
-      #   uses: aws-actions/configure-aws-credentials@v4
-      #   with:
-      #     aws-region: ${{ secrets.AWS_REGION }}
-      #     aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      #     aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      #
-      # - name: 🔐 AWS — Login to ECR
-      #   id: ecr-login
-      #   uses: aws-actions/amazon-ecr-login@v2
-      #
-      # - name: 🐳 AWS — Build & Push Backend to ECR
-      #   uses: docker/build-push-action@v5
-      #   with:
-      #     context: ./TaskBuddy
-      #     push: true
-      #     tags: |
-      #       ${{ steps.ecr-login.outputs.registry }}/taskbuddy-backend:test
-      #       ${{ steps.ecr-login.outputs.registry }}/taskbuddy-backend:${{ github.sha }}
-      #
-      # - name: 🐳 AWS — Build & Push Frontend to ECR
-      #   uses: docker/build-push-action@v5
-      #   with:
-      #     context: ./taskbuddy-frontend
-      #     push: true
-      #     tags: |
-      #       ${{ steps.ecr-login.outputs.registry }}/taskbuddy-frontend:test
-      #       ${{ steps.ecr-login.outputs.registry }}/taskbuddy-frontend:${{ github.sha }}
-      #
-      # - name: 📝 AWS — Render ECS Task Definition
-      #   env:
-      #     ECR_REGISTRY: ${{ steps.ecr-login.outputs.registry }}
-      #     DB_HOST: ${{ secrets.DB_HOST }}
-      #     DB_PORT: ${{ secrets.DB_PORT }}
-      #     DB_NAME: ${{ secrets.DB_NAME }}
-      #     DB_USERNAME: ${{ secrets.DB_USERNAME }}
-      #     DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-      #     OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-      #     AWS_REGION: ${{ secrets.AWS_REGION }}
-      #   run: envsubst < .aws/ecs-task-definition.template.json > .aws/ecs-task-definition.json
-      #
-      # - name: 🚀 AWS — Deploy to ECS
-      #   uses: aws-actions/amazon-ecs-deploy-task-definition@v2
-      #   with:
-      #     task-definition: .aws/ecs-task-definition.json
-      #     service: taskbuddy-test
-      #     cluster: taskbuddy-test-cluster
-      #     wait-for-service-stability: true
-
-      # ==========================================
-      # PART B — GCP: auth -> login Artifact Registry -> build & push -> Cloud Run
-      # ==========================================
-      - name: 🔐 GCP — Authenticate (Workload Identity Federation)
-        id: gcp-auth
-        uses: google-github-actions/auth@v2
+      - name: 🔐 AWS — Configure Credentials
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          token_format: access_token
-          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+          aws-region: ${{ secrets.AWS_REGION }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
-      - name: 🔐 GCP — Login to Artifact Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ secrets.GCP_REGION }}-docker.pkg.dev
-          username: oauth2accesstoken
-          password: ${{ steps.gcp-auth.outputs.access_token }}
+      - name: 🔐 AWS — Login to ECR
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
 
-      - name: 🐳 GCP — Build & Push Backend to Artifact Registry
+      - name: 🐳 AWS — Build & Push Backend to ECR
         uses: docker/build-push-action@v5
         with:
           context: ./TaskBuddy
           push: true
           tags: |
-            ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT }}/taskbuddy/taskbuddy-backend:test
-            ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT }}/taskbuddy/taskbuddy-backend:${{ github.sha }}
+            ${{ steps.ecr-login.outputs.registry }}/taskbuddy-backend:test
+            ${{ steps.ecr-login.outputs.registry }}/taskbuddy-backend:${{ github.sha }}
 
-      - name: 🐳 GCP — Build & Push Frontend to Artifact Registry
+      - name: 🐳 AWS — Build & Push Frontend to ECR
         uses: docker/build-push-action@v5
         with:
           context: ./taskbuddy-frontend
           push: true
           tags: |
-            ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT }}/taskbuddy/taskbuddy-frontend:test
-            ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT }}/taskbuddy/taskbuddy-frontend:${{ github.sha }}
+            ${{ steps.ecr-login.outputs.registry }}/taskbuddy-frontend:test
+            ${{ steps.ecr-login.outputs.registry }}/taskbuddy-frontend:${{ github.sha }}
 
-      - name: 🚀 GCP — Deploy Backend to Cloud Run
-        id: deploy-backend
-        uses: google-github-actions/deploy-cloudrun@v2
-        with:
-          service: taskbuddy-backend-test
-          region: ${{ secrets.GCP_REGION }}
-          image: ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT }}/taskbuddy/taskbuddy-backend:test
-          allow_unauthenticated: true
-          env_vars: |
-            DB_HOST=${{ secrets.DB_HOST }}
-            DB_PORT=${{ secrets.DB_PORT }}
-            DB_NAME=${{ secrets.DB_NAME }}
-            DB_USERNAME=${{ secrets.DB_USERNAME }}
-            DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-            OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
-            CORS_ALLOWED_ORIGINS=https://*.run.app
-
-      # Cloud Run returnează URL-ul cu slash final; îl tăiem ca să nu
-      # strice proxy_pass din nginx (ar elimina prefixul /api).
-      # SCOPE = URL fără scheme (https://), folosit ca antet Host — Cloud Run
-      # face routing după Host, deci nginx trebuie să trimită domeniul backend-ului.
-      - name: 🔗 GCP — Compute Backend URL
-        id: gcp-backend-url
-        run: |
-          U="${GCP_BACKEND_URL%/}"
-          echo "url=$U" >> "$GITHUB_OUTPUT"
-          echo "scope=${U#https://}" >> "$GITHUB_OUTPUT"
+      - name: 📝 AWS — Render ECS Task Definition
         env:
-          GCP_BACKEND_URL: ${{ steps.deploy-backend.outputs.url }}
+          ECR_REGISTRY: ${{ steps.ecr-login.outputs.registry }}
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_PORT: ${{ secrets.DB_PORT }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          DB_USERNAME: ${{ secrets.DB_USERNAME }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+        run: envsubst < .aws/ecs-task-definition.template.json > .aws/ecs-task-definition.json
 
-      - name: 🚀 GCP — Deploy Frontend to Cloud Run
-        uses: google-github-actions/deploy-cloudrun@v2
+      - name: 🚀 AWS — Deploy to ECS
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
         with:
-          service: taskbuddy-frontend-test
-          region: ${{ secrets.GCP_REGION }}
-          image: ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT }}/taskbuddy/taskbuddy-frontend:test
-          allow_unauthenticated: true
-          env_vars: |
-            BACKEND_URL=${{ steps.gcp-backend-url.outputs.url }}/api/
-            BACKEND_HOST=${{ steps.gcp-backend-url.outputs.scope }}
+          task-definition: .aws/ecs-task-definition.json
+          service: taskbuddy-test
+          cluster: taskbuddy-test-cluster
+          wait-for-service-stability: true
+
+      # ==========================================
+      # PART B — GCP: auth -> login Artifact Registry -> build & push -> Cloud Run
+      # COMENTAT: se activează când secretele GCP_* există în environment-ul Test.
+      # ==========================================
+      # - name: 🔐 GCP — Authenticate (Workload Identity Federation)
+      #   id: gcp-auth
+      #   uses: google-github-actions/auth@v2
+      #   with:
+      #     token_format: access_token
+      #     workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+      #     service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+      #
+      # - name: 🔐 GCP — Login to Artifact Registry
+      #   uses: docker/login-action@v3
+      #   with:
+      #     registry: ${{ secrets.GCP_REGION }}-docker.pkg.dev
+      #     username: oauth2accesstoken
+      #     password: ${{ steps.gcp-auth.outputs.access_token }}
+      #
+      # - name: 🐳 GCP — Build & Push Backend to Artifact Registry
+      #   uses: docker/build-push-action@v5
+      #   with:
+      #     context: ./TaskBuddy
+      #     push: true
+      #     tags: |
+      #       ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT }}/taskbuddy/taskbuddy-backend:test
+      #       ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT }}/taskbuddy/taskbuddy-backend:${{ github.sha }}
+      #
+      # - name: 🐳 GCP — Build & Push Frontend to Artifact Registry
+      #   uses: docker/build-push-action@v5
+      #   with:
+      #     context: ./taskbuddy-frontend
+      #     push: true
+      #     tags: |
+      #       ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT }}/taskbuddy/taskbuddy-frontend:test
+      #       ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT }}/taskbuddy/taskbuddy-frontend:${{ github.sha }}
+      #
+      # - name: 🚀 GCP — Deploy Backend to Cloud Run
+      #   id: deploy-backend
+      #   uses: google-github-actions/deploy-cloudrun@v2
+      #   with:
+      #     service: taskbuddy-backend-test
+      #     region: ${{ secrets.GCP_REGION }}
+      #     image: ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT }}/taskbuddy/taskbuddy-backend:test
+      #     allow_unauthenticated: true
+      #     env_vars: |
+      #       DB_HOST=${{ secrets.DB_HOST }}
+      #       DB_PORT=${{ secrets.DB_PORT }}
+      #       DB_NAME=${{ secrets.DB_NAME }}
+      #       DB_USERNAME=${{ secrets.DB_USERNAME }}
+      #       DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+      #       OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
+      #       CORS_ALLOWED_ORIGINS=https://*.run.app
+      #
+      # # Cloud Run returnează URL-ul cu slash final; îl tăiem ca să nu
+      # # strice proxy_pass din nginx (ar elimina prefixul /api).
+      # # SCOPE = URL fără scheme (https://), folosit ca antet Host — Cloud Run
+      # # face routing după Host, deci nginx trebuie să trimită domeniul backend-ului.
+      # - name: 🔗 GCP — Compute Backend URL
+      #   id: gcp-backend-url
+      #   run: |
+      #     U="${GCP_BACKEND_URL%/}"
+      #     echo "url=$U" >> "$GITHUB_OUTPUT"
+      #     echo "scope=${U#https://}" >> "$GITHUB_OUTPUT"
+      #   env:
+      #     GCP_BACKEND_URL: ${{ steps.deploy-backend.outputs.url }}
+      #
+      # - name: 🚀 GCP — Deploy Frontend to Cloud Run
+      #   uses: google-github-actions/deploy-cloudrun@v2
+      #   with:
+      #     service: taskbuddy-frontend-test
+      #     region: ${{ secrets.GCP_REGION }}
+      #     image: ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT }}/taskbuddy/taskbuddy-frontend:test
+      #     allow_unauthenticated: true
+      #     env_vars: |
+      #       BACKEND_URL=${{ steps.gcp-backend-url.outputs.url }}/api/
+      #       BACKEND_HOST=${{ steps.gcp-backend-url.outputs.scope }}
 
       # ==========================================
       # PART C — Azure: login -> az acr login -> build & push -> Container Apps
@@ -479,6 +478,6 @@ jobs:
       # ==========================================
       - name: ✅ Deployment Summary
         run: |
-          echo "🚀 Test deployment complete (GCP only — AWS & Azure commented out):"
+          echo "🚀 Test deployment complete (AWS only — GCP & Azure commented out):"
           echo ""
-          echo "  GCP (Artifact Registry): ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT }}/taskbuddy/taskbuddy-{backend,frontend}:test"
+          echo "  AWS (ECR): ${{ secrets.AWS_REGION }} — ECS taskbuddy-test"
