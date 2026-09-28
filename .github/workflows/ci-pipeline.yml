@@ -334,7 +334,7 @@ jobs:
         uses: aws-actions/amazon-ecs-deploy-task-definition@v2
         with:
           task-definition: .aws/ecs-task-definition.json
-          service: taskbuddy-test
+          service: taskbuddy-test-service-01
           cluster: taskbuddy-test-cluster
           wait-for-service-stability: true
 
