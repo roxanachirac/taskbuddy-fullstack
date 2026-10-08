@@ -459,7 +459,8 @@ jobs:
               DB_NAME=${{ secrets.DB_NAME }} \
               DB_USERNAME=${{ secrets.DB_USERNAME }} \
               DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
-              OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
+              OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }} \
+              CORS_ALLOWED_ORIGINS=http://localhost:5173,http://localhost:3000,http://localhost,http://127.0.0.1,http://frontend,https://taskbuddy-frontend.bluetree-74fd2b35.polandcentral.azurecontainerapps.io
 
       - name: 🚀 Azure — Deploy Frontend to Container Apps
         run: |
