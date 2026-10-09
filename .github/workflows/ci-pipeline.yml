@@ -261,7 +261,7 @@ jobs:
 
 
   # ==========================================
-  # JOB 5: DEPLOY TO TEST (Azure activ; AWS + GCP comentate)
+  # JOB 5: DEPLOY TO TEST (toate comentate — AWS + GCP + Azure inactive)
   # Fiecare cloud folosește REGISTRY-UL NATIV:
   #   AWS   -> ECR (comentat — fără cont configurat)
   #   GCP   -> Artifact Registry (comentat — fără cont configurat)
@@ -419,66 +419,66 @@ jobs:
 
       # ==========================================
       # PART C — Azure: login -> az acr login -> build & push -> Container Apps
-      # ACTIV: Azure Container Apps pentru testare.
+      # COMENTAT: Azure Container Apps pentru testare.
       # ==========================================
-      - name: 🔐 Azure — Login (Service Principal)
-        uses: azure/login@v2
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      # - name: 🔐 Azure — Login (Service Principal)
+      #   uses: azure/login@v2
+      #   with:
+      #     creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: 🔐 Azure — Login to ACR (uses the same service principal)
-        run: az acr login --name ${{ secrets.AZURE_ACR_NAME }}
+      # - name: 🔐 Azure — Login to ACR (uses the same service principal)
+      #   run: az acr login --name ${{ secrets.AZURE_ACR_NAME }}
 
-      - name: 🐳 Azure — Build & Push Backend to ACR
-        uses: docker/build-push-action@v5
-        with:
-          context: ./TaskBuddy
-          push: true
-          tags: |
-            ${{ secrets.AZURE_ACR_NAME }}.azurecr.io/taskbuddy-backend:test
-            ${{ secrets.AZURE_ACR_NAME }}.azurecr.io/taskbuddy-backend:${{ github.sha }}
+      # - name: 🐳 Azure — Build & Push Backend to ACR
+      #   uses: docker/build-push-action@v5
+      #   with:
+      #     context: ./TaskBuddy
+      #     push: true
+      #     tags: |
+      #       ${{ secrets.AZURE_ACR_NAME }}.azurecr.io/taskbuddy-backend:test
+      #       ${{ secrets.AZURE_ACR_NAME }}.azurecr.io/taskbuddy-backend:${{ github.sha }}
 
-      - name: 🐳 Azure — Build & Push Frontend to ACR
-        uses: docker/build-push-action@v5
-        with:
-          context: ./taskbuddy-frontend
-          push: true
-          tags: |
-            ${{ secrets.AZURE_ACR_NAME }}.azurecr.io/taskbuddy-frontend:test
-            ${{ secrets.AZURE_ACR_NAME }}.azurecr.io/taskbuddy-frontend:${{ github.sha }}
+      # - name: 🐳 Azure — Build & Push Frontend to ACR
+      #   uses: docker/build-push-action@v5
+      #   with:
+      #     context: ./taskbuddy-frontend
+      #     push: true
+      #     tags: |
+      #       ${{ secrets.AZURE_ACR_NAME }}.azurecr.io/taskbuddy-frontend:test
+      #       ${{ secrets.AZURE_ACR_NAME }}.azurecr.io/taskbuddy-frontend:${{ github.sha }}
 
-      - name: 🚀 Azure — Deploy Backend to Container Apps
-        run: |
-          az containerapp update \
-            --name taskbuddy-backend \
-            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
-            --image ${{ secrets.AZURE_ACR_NAME }}.azurecr.io/taskbuddy-backend:test \
-            --set-env-vars \
-              DB_HOST=${{ secrets.DB_HOST }} \
-              DB_PORT=${{ secrets.DB_PORT }} \
-              DB_NAME=${{ secrets.DB_NAME }} \
-              DB_USERNAME=${{ secrets.DB_USERNAME }} \
-              DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
-              OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }} \
-              CORS_ALLOWED_ORIGINS=http://localhost:5173,http://localhost:3000,http://localhost,http://127.0.0.1,http://frontend,https://taskbuddy-frontend.bluetree-74fd2b35.polandcentral.azurecontainerapps.io
+      # - name: 🚀 Azure — Deploy Backend to Container Apps
+      #   run: |
+      #     az containerapp update \
+      #       --name taskbuddy-backend \
+      #       --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
+      #       --image ${{ secrets.AZURE_ACR_NAME }}.azurecr.io/taskbuddy-backend:test \
+      #       --set-env-vars \
+      #         DB_HOST=${{ secrets.DB_HOST }} \
+      #         DB_PORT=${{ secrets.DB_PORT }} \
+      #         DB_NAME=${{ secrets.DB_NAME }} \
+      #         DB_USERNAME=${{ secrets.DB_USERNAME }} \
+      #         DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
+      #         OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }} \
+      #         CORS_ALLOWED_ORIGINS=http://localhost:5173,http://localhost:3000,http://localhost,http://127.0.0.1,http://frontend,https://taskbuddy-frontend.bluetree-74fd2b35.polandcentral.azurecontainerapps.io
 
-      - name: 🚀 Azure — Deploy Frontend to Container Apps
-        run: |
-          BACKEND_URL=$(az containerapp show \
-            --name taskbuddy-backend \
-            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
-            --query properties.configuration.ingress.fqdn -o tsv)
-          az containerapp update \
-            --name taskbuddy-frontend \
-            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
-            --image ${{ secrets.AZURE_ACR_NAME }}.azurecr.io/taskbuddy-frontend:test \
-            --set-env-vars BACKEND_URL=https://$BACKEND_URL
+      # - name: 🚀 Azure — Deploy Frontend to Container Apps
+      #   run: |
+      #     BACKEND_URL=$(az containerapp show \
+      #       --name taskbuddy-backend \
+      #       --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
+      #       --query properties.configuration.ingress.fqdn -o tsv)
+      #     az containerapp update \
+      #       --name taskbuddy-frontend \
+      #       --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
+      #       --image ${{ secrets.AZURE_ACR_NAME }}.azurecr.io/taskbuddy-frontend:test \
+      #       --set-env-vars BACKEND_URL=https://$BACKEND_URL
 
       # ==========================================
       # SUMMARY
       # ==========================================
-      - name: ✅ Deployment Summary
-        run: |
-          echo "🚀 Test deployment complete (Azure only — AWS & GCP commented out):"
-          echo ""
-          echo "  Azure (ACR + Container Apps): ${{ secrets.AZURE_ACR_NAME }} → taskbuddy-test-rg"
+      # - name: ✅ Deployment Summary
+      #   run: |
+      #     echo "🚀 Test deployment complete (all deployments commented out — AWS, GCP & Azure inactive):"
+      #     echo ""
+      #     echo "  No active deployment targets."
